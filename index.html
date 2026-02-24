@@ -1,0 +1,376 @@
+```<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>花辞dt的我的世界Minecraft服务器状态查询器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a2a6c, #2a4d69, #4b86b4);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        input {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        button {
+            padding: 15px 30px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .server-info {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .server-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .status-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .status-online {
+            background: #4CAF50;
+            box-shadow: 0 0 10px #4CAF50;
+        }
+
+        .status-offline {
+            background: #f44336;
+            box-shadow: 0 0 10px #f44336;
+        }
+
+        .server-title {
+            font-size: 1.5em;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .info-item {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .info-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .version-info {
+            background: rgba(33, 150, 243, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .motd {
+            background: rgba(156, 39, 176, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            text-align: center;
+            color: #333;
+            font-style: italic;
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2em;
+            margin: 20px 0;
+        }
+
+        .error {
+            background: rgba(244, 67, 54, 0.1);
+            color: #f44336;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: #4CAF50;
+        }
+
+        .tab:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 我的世界Minecraft服务器查询</h1>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchVersion('java')">Java版</button>
+            <button class="tab" onclick="switchVersion('bedrock')">基岩版</button>
+        </div>
+        
+        <div class="input-group">
+            <input type="text" id="ipInput" placeholder="请输入服务器IP地址 (例: play.hypixel.net)" value="">
+            <button onclick="queryServer()">查询</button>
+        </div>
+        
+        <div id="loading" class="loading" style="display: none;">
+            🔄 查询中...
+        </div>
+        
+        <div id="error" class="error" style="display: none;"></div>
+        
+        <div id="serverInfo" class="server-info" style="display: none;">
+            <div class="server-header">
+                <div class="status-indicator status-online" id="statusIndicator"></div>
+                <div class="server-title" id="serverTitle">服务器信息</div>
+            </div>
+            
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">在线玩家</div>
+                    <div class="info-value" id="onlinePlayers">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">最大玩家</div>
+                    <div class="info-value" id="maxPlayers">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">延迟</div>
+                    <div class="info-value" id="ping">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">端口</div>
+                    <div class="info-value" id="port">-</div>
+                </div>
+            </div>
+            
+            <div class="version-info">
+                <div class="info-label">游戏版本</div>
+                <div class="info-value" id="version">-</div>
+            </div>
+            
+            <div class="motd" id="motd">
+                服务器描述信息
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentVersion = 'java';
+        
+        function switchVersion(version) {
+            currentVersion = version;
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+        
+        async function queryServer() {
+            const ip = document.getElementById('ipInput').value.trim();
+            if (!ip) {
+                showError('请输入有效的IP地址');
+                return;
+            }
+            
+            // 显示加载状态
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('serverInfo').style.display = 'none';
+            
+            try {
+                // 解析IP和端口
+                let host = ip;
+                let port = currentVersion === 'java' ? 25565 : 19132; // 默认端口
+                
+                if (ip.includes(':')) {
+                    const parts = ip.split(':');
+                    host = parts[0];
+                    port = parseInt(parts[1]);
+                }
+                
+                // 构建查询URL - 这里使用一个公共的Minecraft服务器查询服务
+                const url = `https://api.mcsrvstat.us/2/${host}:${port}`;
+                
+                const startTime = Date.now();
+                const response = await fetch(url);
+                const data = await response.json();
+                const pingTime = Date.now() - startTime;
+                
+                if (data.debug?.ping === false) {
+                    // 尝试使用默认端口重新查询
+                    const fallbackUrl = currentVersion === 'java' 
+                        ? `https://api.mcsrvstat.us/2/${host}`
+                        : `https://api.mcsrvstat.us/2/${host}:19132`;
+                    
+                    const fallbackResponse = await fetch(fallbackUrl);
+                    const fallbackData = await fallbackResponse.json();
+                    
+                    if (fallbackData.debug?.ping === false) {
+                        throw new Error('服务器无法访问或不存在');
+                    }
+                    
+                    displayServerInfo(fallbackData, pingTime);
+                } else {
+                    displayServerInfo(data, pingTime);
+                }
+                
+            } catch (error) {
+                console.error('查询失败:', error);
+                showError(`查询失败: ${error.message || '网络错误'}`);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+        
+        function displayServerInfo(data, pingTime) {
+            if (!data || !data.online) {
+                document.getElementById('statusIndicator').className = 'status-indicator status-offline';
+                document.getElementById('serverTitle').textContent = '服务器离线';
+                document.getElementById('onlinePlayers').textContent = '0';
+                document.getElementById('maxPlayers').textContent = '0';
+                document.getElementById('ping').textContent = 'N/A';
+                document.getElementById('port').textContent = data.ip ? data.port : '-';
+                document.getElementById('version').textContent = 'N/A';
+                document.getElementById('motd').textContent = '服务器当前不可用';
+            } else {
+                document.getElementById('statusIndicator').className = 'status-indicator status-online';
+                document.getElementById('serverTitle').textContent = `服务器在线 - ${data.ip}:${data.port}`;
+                document.getElementById('onlinePlayers').textContent = data.players?.online || 0;
+                document.getElementById('maxPlayers').textContent = data.players?.max || 0;
+                document.getElementById('ping').textContent = `${pingTime}ms`;
+                document.getElementById('port').textContent = data.port;
+                document.getElementById('version').textContent = data.version || data.software || 'Unknown';
+                
+                // 处理MotD
+                let motd = '';
+                if (typeof data.motd?.clean === 'string') {
+                    motd = data.motd.clean;
+                } else if (Array.isArray(data.motd?.clean)) {
+                    motd = data.motd.clean.join(' ');
+                } else {
+                    motd = '欢迎来到我的服务器！';
+                }
+                document.getElementById('motd').textContent = motd;
+            }
+            
+            document.getElementById('serverInfo').style.display = 'block';
+        }
+        
+        function showError(message) {
+            document.getElementById('error').textContent = message;
+            document.getElementById('error').style.display = 'block';
+        }
+        
+        // 支持回车键查询
+        document.getElementById('ipInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                queryServer();
+            }
+        });
+    </script>
+</body>
+</html>
